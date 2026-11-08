@@ -1,11 +1,13 @@
 'use client';
 import React,{useState,useEffect,useMemo} from 'react';
+import dynamic from 'next/dynamic';
 import {motion,AnimatePresence,useReducedMotion} from 'motion/react';
 import {ArrowUpRight,ArrowRight,ArrowLeft,Search,Sun,Moon,Menu,X,Orbit,Bookmark,Plus,Minus,Network,SlidersHorizontal,BookOpen,Check,Compass,RotateCcw} from 'lucide-react';
 import {philosophers} from '@/data/philosophers';
 import {getPortrait} from '@/data/portraits';
 import {EPOCHS,TOPICS,RELATION_LABELS,CONTENT_STATUS_LABELS,epochLabel,topicLabel,type Philosopher,type TopicId,type EpochId} from '@/data/types';
 import EducationalLab from './EducationalLab';
+const PlatoPage = dynamic(() => import('./plato/PlatoPage'), {loading: () => <div className="page-shell empty-state" role="status"><p>Платон готовится к разговору…</p></div>});
 const NAV=[['library','Философы'],['map','Карта идей'],['timeline','Хронология'],['questions','Вопросы'],['compare','Сравнение']];
 const initialPair=['epicurus','kant'];
 const byId=(id:string)=>philosophers.find(p=>p.id===id);
@@ -13,9 +15,9 @@ const years=(n:number|null)=>n===null?'Дата неизвестна':n<0?`${Mat
 const initials=(p:Philosopher)=>p.name.split(' ').map(x=>x[0]).slice(0,2).join('');
 function Portrait({p,className=''}:{p:Philosopher,className?:string}){const src=getPortrait(p.id)||p.portrait;return src?<img className={className} src={src} alt={`Портрет: ${p.name}`} loading="lazy"/>:<div className={`portrait-fallback ${className}`} aria-label={p.name}><span>{initials(p)}</span><Orbit aria-hidden="true"/></div>;}
 function ArrowLink({children,onClick}:{children:React.ReactNode,onClick:()=>void}){return <button className="text-link" onClick={onClick}>{children}<ArrowUpRight size={18}/></button>;}
-export default function Atlas(){
- const [route,setRoute]=useState('home');const [slug,setSlug]=useState('');const [dark,setDark]=useState(false);const [menu,setMenu]=useState(false);const [saved,setSaved]=useState<string[]>([]);const [compareA,setCompareA]=useState(initialPair[0]);const [compareB,setCompareB]=useState(initialPair[1]);const [compareTopic,setCompareTopic]=useState<TopicId>('happiness');const reduced=useReducedMotion();
- useEffect(()=>{const read=()=>{const parts=window.location.hash.slice(1).split('/');const allowed=['home','library','map','timeline','questions','compare','philosopher'];setRoute(allowed.includes(parts[0])?parts[0]:'home');setSlug(parts[1]||'');setMenu(false);};read();window.addEventListener('hashchange',read);try{const theme=localStorage.getItem('atlas-theme');const value=theme==='dark';setDark(value);document.documentElement.dataset.theme=value?'dark':'light';setSaved(JSON.parse(localStorage.getItem('atlas-saved')||'[]'));}catch{}return()=>window.removeEventListener('hashchange',read);},[]);
+export default function Atlas({initialPhilosopherId}: {initialPhilosopherId?: string} = {}){
+ const [route,setRoute]=useState(initialPhilosopherId?'philosopher':'home');const [slug,setSlug]=useState(initialPhilosopherId||'');const [dark,setDark]=useState(false);const [menu,setMenu]=useState(false);const [saved,setSaved]=useState<string[]>([]);const [compareA,setCompareA]=useState(initialPair[0]);const [compareB,setCompareB]=useState(initialPair[1]);const [compareTopic,setCompareTopic]=useState<TopicId>('happiness');const reduced=useReducedMotion();
+ useEffect(()=>{const read=()=>{const parts=window.location.hash?window.location.hash.slice(1).split('/'):(initialPhilosopherId?['philosopher',initialPhilosopherId]:['home']);const allowed=['home','library','map','timeline','questions','compare','philosopher'];setRoute(allowed.includes(parts[0])?parts[0]:'home');setSlug(parts[1]||'');setMenu(false);};read();window.addEventListener('hashchange',read);try{const theme=localStorage.getItem('atlas-theme');const value=theme==='dark';setDark(value);document.documentElement.dataset.theme=value?'dark':'light';setSaved(JSON.parse(localStorage.getItem('atlas-saved')||'[]'));}catch{}return()=>window.removeEventListener('hashchange',read);},[initialPhilosopherId]);
  const go=(r:string,id='')=>{window.location.hash=r+(id?'/'+id:'');window.scrollTo({top:0,behavior:reduced?'instant':'smooth'});};
  const toggleTheme=()=>{const value=!dark;setDark(value);document.documentElement.dataset.theme=value?'dark':'light';try{localStorage.setItem('atlas-theme',value?'dark':'light');}catch{}};
  const toggleSaved=(id:string)=>{const value=saved.includes(id)?saved.filter(x=>x!==id):[...saved,id];setSaved(value);try{localStorage.setItem('atlas-saved',JSON.stringify(value));}catch{}};
@@ -25,7 +27,7 @@ export default function Atlas(){
  <main id="content" tabIndex={-1}><AnimatePresence mode="wait"><motion.div key={route+'/'+slug} initial={false} animate={{opacity:1,y:0}} exit={{opacity:0}} transition={{duration:reduced?0:.24}}>
  {route==='home'&&<Home go={go} open={open} saved={saved} toggleSaved={toggleSaved}/>}
  {route==='library'&&<Library open={open} saved={saved} toggleSaved={toggleSaved}/>}
- {route==='philosopher'&&<Detail p={byId(slug)} go={go} open={open} saved={saved} toggleSaved={toggleSaved} compare={compare}/>}
+ {route==='philosopher'&&(slug==='plato'?<PlatoPage onBack={()=>go('library')} onOpenPhilosopher={open} saved={saved.includes('plato')} onToggleSaved={()=>toggleSaved('plato')}/>:<Detail p={byId(slug)} go={go} open={open} saved={saved} toggleSaved={toggleSaved} compare={compare}/>)}
  {route==='map'&&<PhilosophyMap open={open}/>}
  {route==='timeline'&&<Timeline open={open}/>}
  {route==='questions'&&<div className="page-shell questions-page"><PageHeading number="05" eyebrow="ФИЛОСОФСКАЯ ЛАБОРАТОРИЯ" title="Вопросы, с которых всё начинается." description="Здесь нет готовых ответов. Есть ситуации, разные взгляды и пространство для вашей собственной мысли."/><EducationalLab initialTopic={TOPICS.some(t=>t.id===slug)?slug as TopicId:undefined} onOpenPhilosopher={open} onCompare={compare}/></div>}

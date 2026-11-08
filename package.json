@@ -7,21 +7,25 @@
     "build": "next build",
     "start": "node scripts/serve.mjs",
     "typecheck": "tsc --noEmit",
-    "check:data": "node scripts/check-data.mjs"
+    "check:data": "node scripts/check-data.mjs",
+    "check:plato": "node scripts/check-plato.mjs",
+    "test:plato": "node scripts/test-plato-interactions.cjs && node scripts/test-plato-interactions.cjs --reduced"
   },
   "dependencies": {
+    "@xyflow/react": "^12.12.1",
+    "lucide-react": "^0.468.0",
+    "motion": "^12.0.0",
     "next": "^16.0.0",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "motion": "^12.0.0",
-    "lucide-react": "^0.468.0"
+    "react-dom": "^19.2.0"
   },
   "devDependencies": {
-    "typescript": "^5.7.0",
+    "@tailwindcss/postcss": "^4.0.0",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "jsdom": "^31.0.0",
     "tailwindcss": "^4.0.0",
-    "@tailwindcss/postcss": "^4.0.0"
+    "typescript": "^5.7.0"
   }
 }
